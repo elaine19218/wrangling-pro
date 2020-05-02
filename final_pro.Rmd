@@ -13,14 +13,28 @@ library(lubridate)
 library(stringr)
 library(dplyr)
 library(leaflet)
+library(gridExtra)
 ```
+
 
 # Transportation
 
 ```{r}
 dat19=read.csv('201903-citibike-tripdata.csv')
 dat20=read.csv('202003-citibike-tripdata.csv')
+```
 
+First, let't take a look at the number of users in 2019 and 2020.
+Since the data are collected according to the used time, so the number of observations in datasets is the number of users. 
+We can see that the number of users decreased by about 300000 in 2020 than 2019.
+```{r}
+print(c("total number of users in March in 2019 and 2020 are:", nrow(dat19), nrow(dat20)))
+```
+
+Here are two barplots for the total number of users in weekdays in 2019 and 2020. 
+We can see that the largest number in 2019 is larger than 200000, but in 2020 it is less than 200000 which is only about 175000. In 2019, the number of users is large in Friday and Saturday, but in 2020 the situation is inverse. It seems apart from the workdays, at least less people go out by bikes.
+
+```{r}
 ########201903
 op=options(digits.secs = 3)
 bike19=dat19 %>%
@@ -28,19 +42,62 @@ bike19=dat19 %>%
          stop=ymd_hms(stoptime, tz='America/New_York'),
          dur=as.numeric(stop-start)*60, 
          weekday=weekdays(start)) %>%
-  separate(start, into = c("start_ymd", "stop_time"), sep = " ")
+  separate(start, into = c("start_ymd", "start_time"), sep = " ")
 
 options(op)
-sum(duplicated(bike19)) #0 so there
+#sum(duplicated(bike19)) #0: there's no duplicates
 
 #number of users in weekdays--barplots
 bike19$weekday=bike19$weekday %>%
-  factor(levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
-                    "Saturday", "Sunday"))
-ggplot(bike19) +
-  geom_bar(aes(x=weekday))
+  factor(levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
 
-#leaflet of stations
+barplot1=bike19 %>%
+  group_by(weekday) %>%
+  summarise(n=n()) %>%
+  ggplot(mapping=aes(x=weekday, y=n)) +
+  geom_bar(stat="identity", fill="#CCCCCC") +
+  ggtitle("201903")
+
+
+#######202003
+op=options(digits.secs = 3)
+bike20=dat20 %>%
+  mutate(start=ymd_hms(starttime, tz='America/New_York'),
+         stop=ymd_hms(stoptime, tz='America/New_York'),
+         dur=as.numeric(stop-start)*60, 
+         weekday=weekdays(start)) %>%
+  separate(start, into = c("start_ymd", "start_time"), sep = " ")
+
+options(op)
+sum(duplicated(bike20)) #0 so there
+
+#number of users in weekdays--barplots
+bike20$weekday=bike20$weekday %>%
+  factor(levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+
+barplot2=bike20 %>%
+  group_by(weekday) %>%
+  summarise(n=n()) %>%
+  ggplot(mapping=aes(x=weekday, y=n)) +
+  geom_bar(stat="identity", fill="#CCCCCC") +
+  ggtitle("202003")
+
+
+grid.arrange(barplot1, barplot2, ncol=2)
+```
+
+Trip Duration?
+```{r}
+
+```
+
+In addition, here's two interactive maps created by leaflets(Google map may have better performance but Goolge map did not provide free api any more).  
+The first map is for 2019, and the second one is for 2020. The color on the map denotes the station's frequency. There are four categories: Low(white), Normal(yellow), Middle(orange) and High(red). They are divided by using the quantiles of frequency in 2019. 
+From 2019 to 2020, there's actually little difference existing except for some stations deleted by the company. However, still in the north of map, the red color seems to be covered by the orange and yellow one, which means stations in those part are not used as often as a year before.
+
+Map: 201903
+```{r}
+#leaflet of stations2019
 start.station19= dat19 %>%
   select(start.station.id, start.station.latitude, 
          start.station.longitude)
@@ -77,27 +134,13 @@ leaflet(stations19) %>% addTiles() %>%
                    color = ~pal(type),
                    stroke = FALSE, fillOpacity = 0.5
   )
+```
+  
+Map: 202003
+```{r}
 
-#######202003
-op=options(digits.secs = 3)
-bike20=dat20 %>%
-  mutate(start=ymd_hms(starttime, tz='America/New_York'),
-         stop=ymd_hms(stoptime, tz='America/New_York'),
-         dur=as.numeric(stop-start)*60, 
-         weekday=weekdays(start)) %>%
-  separate(start, into = c("start_ymd", "start_time"), sep = " ")
 
-options(op)
-sum(duplicated(bike20)) #0 so there
-
-#number of users in weekdays--barplots
-bike20$weekday=bike20$weekday %>%
-  factor(levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
-                    "Saturday", "Sunday"))
-ggplot(bike20) +
-  geom_bar(aes(x=weekday))
-
-#leaflet of stations
+#leaflet of stations2020
 #only want stations with more than median frequency:815
 start.station20= dat20 %>%
   select(start.station.id, start.station.latitude, 
