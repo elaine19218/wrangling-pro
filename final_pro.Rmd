@@ -21,7 +21,62 @@ library(leaflet)
 dat19=read.csv('201903-citibike-tripdata.csv')
 dat20=read.csv('202003-citibike-tripdata.csv')
 
+########201903
+op=options(digits.secs = 3)
+bike19=dat19 %>%
+  mutate(start=ymd_hms(starttime, tz='America/New_York'),
+         stop=ymd_hms(stoptime, tz='America/New_York'),
+         dur=as.numeric(stop-start)*60, 
+         weekday=weekdays(start)) %>%
+  separate(start, into = c("start_ymd", "stop_time"), sep = " ")
 
+options(op)
+sum(duplicated(bike19)) #0 so there
+
+#number of users in weekdays--barplots
+bike19$weekday=bike19$weekday %>%
+  factor(levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
+                    "Saturday", "Sunday"))
+ggplot(bike19) +
+  geom_bar(aes(x=weekday))
+
+#leaflet of stations
+start.station19= dat19 %>%
+  select(start.station.id, start.station.latitude, 
+         start.station.longitude)
+
+stop.station19=dat19 %>%
+  select(end.station.id, end.station.latitude, 
+         end.station.longitude) 
+
+names(start.station19)=c("id", "lat", "lon")
+names(stop.station19)=c("id", "lat", "lon")
+full19=rbind(start.station19, stop.station19) 
+full19$id=as.integer(full19$id)
+
+
+id19=full19 %>%
+  group_by(id) %>%
+  summarise(ntotal=n())
+
+stations19=full19 %>%
+  left_join(id19) %>%
+  filter(!duplicated(.)==TRUE)
+
+quantile(stations19$ntotal)
+
+stations19$type = cut(stations19$ntotal, 
+                      breaks = c(1, 1038.75, 2295, 4944.75, 21808), 
+                      right=FALSE,
+                      labels = c("Low", "Normal", "Middle", "High"))  
+pal <- colorFactor(c("oldlace", "lightgoldenrod", "orange", "red"), 
+                   domain = c("Low", "Normal", "Middle", "High"))
+
+leaflet(stations19) %>% addTiles() %>%
+  addCircleMarkers(~lon, ~lat,
+                   color = ~pal(type),
+                   stroke = FALSE, fillOpacity = 0.5
+  )
 
 #######202003
 op=options(digits.secs = 3)
@@ -44,109 +99,45 @@ ggplot(bike20) +
 
 #leaflet of stations
 #only want stations with more than median frequency:815
-start.id20=dat20 %>%
-  select(start.station.id, start.station.name, 
-         start.station.latitude, start.station.longitude) %>%
-  group_by(start.station.id) %>%
-  summarise(n=n()) %>%
-  filter(n<quantile(n)[3]) #812
-
 start.station20= dat20 %>%
-  select(start.station.id, start.station.name, 
-         start.station.latitude, start.station.longitude) %>%
-  semi_join(start.id20) 
-
-stop.id20=dat20 %>%
-  select(end.station.id, end.station.name, 
-         end.station.latitude, end.station.longitude) %>%
-  group_by(end.station.id) %>%
-  summarise(n=n()) %>%
-  filter(n<quantile(n)[3]) #808
+  select(start.station.id, start.station.latitude, 
+         start.station.longitude)
 
 stop.station20=dat20 %>%
-  select(end.station.id, end.station.name, 
-         end.station.latitude, end.station.longitude) %>%
-  semi_join(stop.id20)
+  select(end.station.id, end.station.latitude, 
+         end.station.longitude) 
 
-names(start.station20)=c("id", "name", "lat", "lon")
-names(stop.station20)=c("id", "name", "lat", "lon")
+names(start.station20)=c("id", "lat", "lon")
+names(stop.station20)=c("id", "lat", "lon")
+full20=rbind(start.station20, stop.station20) 
+full20$id=as.integer(full20$id)
 
 
-start20=start.station20 %>% 
-  select(lat,lon) %>%
+id20=full20 %>%
+  group_by(id) %>%
+  summarise(ntotal=n())
+
+stations20=full20 %>%
+  left_join(id20) %>%
   filter(!duplicated(.)==TRUE)
-stop20=stop.station20 %>% 
-  select(lat,lon) %>%
-  filter(!duplicated(.)==TRUE)
-stations20=dplyr::union(start20, stop20) %>%
-  group_by(lat, lon) %>%
-  summarise(n=n())
-leaflet() %>%
-  addTiles() %>%
-  addMarkers(~lon, ~lat, data = stations20) %>%
-  setView(-74.00, 40.71, zoom = 12)
+
+
+
+stations20$type = cut(stations20$ntotal, 
+                      breaks = c(1, 1038.75, 2295, 4944.75, 21808), 
+                      right=FALSE,
+                      labels = c("Low", "Normal", "Middle", "High"))  
+pal <- colorFactor(c("oldlace", "lightgoldenrod", "orange", "red"), 
+                   domain = c("Low", "Normal", "Middle", "High"))
+
+leaflet(stations20) %>% addTiles() %>%
+  addCircleMarkers(~lon, ~lat,
+                   color = ~pal(type),
+                   stroke = FALSE, fillOpacity = 0.5
+  )
   
-########201903
-op=options(digits.secs = 3)
-bike19=dat19 %>%
-  mutate(start=ymd_hms(starttime, tz='America/New_York'),
-         stop=ymd_hms(stoptime, tz='America/New_York'),
-         dur=as.numeric(stop-start)*60, 
-         weekday=weekdays(start)) %>%
-  separate(start, into = c("start_ymd", "stop_time"), sep = " ")
-
-options(op)
-sum(duplicated(bike19)) #0 so there
-
-#number of users in weekdays--barplots
-bike19$weekday=bike19$weekday %>%
-  factor(levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
-                    "Saturday", "Sunday"))
-ggplot(bike19) +
-  geom_bar(aes(x=weekday))
-
-#leaflet of stations
-start.id19=dat19 %>%
-  select(start.station.id, start.station.name, 
-         start.station.latitude, start.station.longitude) %>%
-  group_by(start.station.id) %>%
-  summarise(n=n()) %>%
-  filter(n<812)
-
-start.station19= dat19 %>%
-  select(start.station.id, start.station.name, 
-         start.station.latitude, start.station.longitude) %>%
-  semi_join(start.id19) 
-
-stop.id19=dat19 %>%
-  select(end.station.id, end.station.name, 
-         end.station.latitude, end.station.longitude) %>%
-  group_by(end.station.id) %>%
-  summarise(n=n()) %>%
-  filter(n<808)
-
-stop.station19=dat19 %>%
-  select(end.station.id, end.station.name, 
-         end.station.latitude, end.station.longitude) %>%
-  semi_join(stop.id19)
-
-names(start.station19)=c("id", "name", "lat", "lon")
-names(stop.station19)=c("id", "name", "lat", "lon")
 
 
-start19=start.station19 %>% 
-  select(lat,lon) %>%
-  filter(!duplicated(.)==TRUE)
-stop19=stop.station19 %>% 
-  select(lat,lon) %>%
-  filter(!duplicated(.)==TRUE)
-stations19=dplyr::union(start19, stop19) %>%
-  group_by(lat, lon) %>%
-  summarise(n=n())
-leaflet() %>%
-  addTiles() %>%
-  addMarkers(~lon, ~lat, data = stations19) %>%
-  setView(-74.00, 40.71, zoom = 12)
 ```
 
 
@@ -154,18 +145,21 @@ leaflet() %>%
 
 ```{r}
 #bnb_dat=read.csv('2020reviews.csv')
+#bnb_dat2019=bnb_dat %>%
+#  mutate(time=ymd(date)) %>%
+#  filter(year(time)==2019) %>%
+#  separate(time, into = c("year", "month", "day"), sep = "-")
+#write_csv(bnb_dat2019, "bnb2019")  
+#bnb_dat2020=bnb_dat %>%
+#  mutate(time=ymd(date)) %>%
+#  filter(year(time)==2020) %>%
+#  separate(time, into = c("year", "month", "day"), sep = "-")
+#write_csv(bnb_dat2020, "bnb2020")  
 
-bnb_dat2019=bnb_dat %>%
-  mutate(time=ymd(date)) %>%
-  filter(year(time)==2019) %>%
-  separate(time, into = c("year", "month", "day"), sep = "-")
-write_csv(bnb_dat2019, "bnb2019")  
-  
-bnb_dat2020=bnb_dat %>%
-  mutate(time=ymd(date)) %>%
-  filter(year(time)==2020) %>%
-  separate(time, into = c("year", "month", "day"), sep = "-")
-write_csv(bnb_dat2020, "bnb2020")  
+bnb_dat2019=read.csv('bnb_dat2019.csv')
+bnb_dat2020=read.csv('bnb_dat202.csv')
+
+
 ```
 
 
@@ -176,14 +170,11 @@ write_csv(bnb_dat2020, "bnb2020")
 weather="https://www.usclimatedata.com/climate/new-york/new-york/united-states/usny0996" %>%
   read_html %>%
   html_table()
-
 t1=weather[1] %>%
   unlist() 
-
 t2=weather[2] %>%
   unlist() %>%
   .[-1:-5]
-
 w=c(t1, t2)
 name_w=names(w)[-1:-5]
 weather_dat=matrix(0, 5, 13) 
