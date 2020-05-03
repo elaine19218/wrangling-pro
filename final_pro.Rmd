@@ -7,34 +7,33 @@ output: html_document
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(lubridate)
 library(stringr)
 library(dplyr)
 library(leaflet)
 library(gridExtra)
+library(rvest)
 ```
 
 
 # Transportation
-
-```{r}
+  In New York City, because of issues like congestion, parking, and crowded city, most of people do not drive. Citi Bike is New York City’s bike share system, and the largest in the nation. So I choose to use the history data they provided to estimate the traveling situation. As the datasets are too large and even cannot be uploaded to cloud, I just chose to compare the same period time in two years. They are trip data in March 2019 and in March 2020.
+```{r echo=FALSE}
 dat19=read.csv('201903-citibike-tripdata.csv')
 dat20=read.csv('202003-citibike-tripdata.csv')
 ```
 
-First, let't take a look at the number of users in 2019 and 2020.
-Since the data are collected according to the used time, so the number of observations in datasets is the number of users. 
-We can see that the number of users decreased by about 300000 in 2020 than 2019.
-```{r}
+  First of all, since the data are collected according to the using time, so the number of observations in datasets is the number of users. We can see that the number of users decreased by about 300000 in 2020 than 2019.
+  
+```{r echo=FALSE}
 print(c("total number of users in March in 2019 and 2020 are:", nrow(dat19), nrow(dat20)))
 ```
 
-Here are two barplots for the total number of users in weekdays in 2019 and 2020. 
-We can see that the largest number in 2019 is larger than 200000, but in 2020 it is less than 200000 which is only about 175000. In 2019, the number of users is large in Friday and Saturday, but in 2020 the situation is inverse. It seems apart from the workdays, at least less people go out by bikes.
+  Here are two barplots for the total number of users in weekdays in 2019 and 2020. We can see that the largest number in 2019 is larger than 200000, but in 2020 it is less than 200000 which is only about 175000. In 2019, the number of users is large in Friday and Saturday, but in 2020 the situation is inverse. It seems apart from the workdays, at least less people go out by bikes.
 
-```{r}
+```{r echo=FALSE}
 ########201903
 op=options(digits.secs = 3)
 bike19=dat19 %>%
@@ -69,7 +68,7 @@ bike20=dat20 %>%
   separate(start, into = c("start_ymd", "start_time"), sep = " ")
 
 options(op)
-sum(duplicated(bike20)) #0 so there
+#sum(duplicated(bike20)) #0 so there
 
 #number of users in weekdays--barplots
 bike20$weekday=bike20$weekday %>%
@@ -87,7 +86,7 @@ grid.arrange(barplot1, barplot2, ncol=2)
 ```
 
 Trip Duration?
-```{r}
+```{r echo=FALSE}
 
 ```
 
@@ -96,7 +95,7 @@ The first map is for 2019, and the second one is for 2020. The color on the map 
 From 2019 to 2020, there's actually little difference existing except for some stations deleted by the company. However, still in the north of map, the red color seems to be covered by the orange and yellow one, which means stations in those part are not used as often as a year before.
 
 Map: 201903
-```{r}
+```{r echo=FALSE}
 #leaflet of stations2019
 start.station19= dat19 %>%
   select(start.station.id, start.station.latitude, 
@@ -130,14 +129,14 @@ pal <- colorFactor(c("oldlace", "lightgoldenrod", "orange", "red"),
                    domain = c("Low", "Normal", "Middle", "High"))
 
 leaflet(stations19) %>% addTiles() %>%
-  addCircleMarkers(~lon, ~lat,
+  addCircleMarkers(~lon, ~lat, radius = 6,
                    color = ~pal(type),
                    stroke = FALSE, fillOpacity = 0.5
   )
 ```
   
 Map: 202003
-```{r}
+```{r echo=FALSE}
 
 
 #leaflet of stations2020
@@ -174,7 +173,7 @@ pal <- colorFactor(c("oldlace", "lightgoldenrod", "orange", "red"),
                    domain = c("Low", "Normal", "Middle", "High"))
 
 leaflet(stations20) %>% addTiles() %>%
-  addCircleMarkers(~lon, ~lat,
+  addCircleMarkers(~lon, ~lat, radius = 6,
                    color = ~pal(type),
                    stroke = FALSE, fillOpacity = 0.5
   )
@@ -185,8 +184,10 @@ leaflet(stations20) %>% addTiles() %>%
 
 
 # Travel
+  The dataset in this part comes from Airbnb, which is a famous online marketplace for arranging or offering lodging, primarily homestays, or tourism experiences. Since Airbnb does not have the data about occupancy, and on their official page, they used review rate to estimate bookings, I also used the number of reviews here to represent the number of travelers in each year as we will mostly focus on the relative trend but not the precise number.  
+  Initially I planned to collect at least three years of data to analyze, but the data file is so large and the data even cannot be uploded to cloud, so I just compared the same period of two years.  The original data file(bnb_dat) contains all the comments for every listing house from about January, 2009 to March, 2020. To compare the change brought about by the panic, I filtered the data into two datasets: bnb_dat2019 and bnb_dat2020 and both of them contains data from January to March in each year which is a quarter of year.  
 
-```{r}
+```{r echo=FALSE}
 #bnb_dat=read.csv('2020reviews.csv')
 #bnb_dat2019=bnb_dat %>%
 #  mutate(time=ymd(date)) %>%
@@ -199,9 +200,58 @@ leaflet(stations20) %>% addTiles() %>%
 #  separate(time, into = c("year", "month", "day"), sep = "-")
 #write_csv(bnb_dat2020, "bnb2020")  
 
-bnb_dat2019=read.csv('bnb_dat2019.csv')
-bnb_dat2020=read.csv('bnb_dat202.csv')
+bnb_dat2019=read.csv('bnb2019')
+bnb_dat2020=read.csv('bnb2020')
 
+bnb_dat2019$month=as.integer(bnb_dat2019$month)
+bnb_dat2020$month=as.integer(bnb_dat2020$month)
+
+#filter data in first season
+bnb_dat201903=bnb_dat2019 %>%
+  filter(month<=3) 
+  
+bnb_dat202003=bnb_dat2020 %>%
+  filter(month<=3)
+
+```
+
+  Here are two barplot for the number of comments in 2019 and 2020. We can see that the trend in 2019 is first going down and than rising up in March. The largest number is about 30000 in March. However in 2020, the trend is obviously going down although the largest number of comments is moren than 30000.
+
+```{r echo=FALSE}
+#barplot for the number of comments in each month
+p1=bnb_dat201903 %>%
+  group_by(month) %>%
+  summarise(n=n()) %>%
+  ggplot(aes(x=month, y=n)) +
+  geom_bar(stat="identity", fill="#CCCCCC") +
+  ggtitle("201903")
+
+p2=bnb_dat202003 %>%
+  group_by(month) %>%
+  summarise(n=n()) %>%
+  ggplot(aes(x=month, y=n)) +
+  geom_bar(stat="identity", fill="#CCCCCC") +
+  ggtitle("202003")
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+  Below are some simple decriptive indicators. Compared to the same period in 2019, the number of reviews decreased by about 70%. But only in comments in March appears the related words 'covid', 'COVID' and so on. And the rate of those comments is just 1.1%.
+
+```{r echo=FALSE}
+# the number of reviews decreased by about 70%
+print(paste("the number of reviews in 2019 and 2020 are: ", 
+        nrow(bnb_dat201903), nrow(bnb_dat202003)))
+decrease_rate=(nrow(bnb_dat201903)-nrow(bnb_dat202003))/nrow(bnb_dat201903)
+print(paste("Decrease rate: ", decrease_rate))
+
+## covid in reviews in March
+bnb_dat2020_3 = bnb_dat202003 %>%
+  filter(month==3) %>%
+  mutate(covid=str_detect(comments, "covid|COVID|coronavirus"))
+
+p=sum(bnb_dat2020_3$covid, na.rm = TRUE)/nrow(bnb_dat2020_3)
+print(paste("Rate of comments having covid related topic:", p))
 
 ```
 
@@ -209,12 +259,13 @@ bnb_dat2020=read.csv('bnb_dat202.csv')
 
 # Weather
 
-```{r}
+```{r echo=FALSE}
 weather="https://www.usclimatedata.com/climate/new-york/new-york/united-states/usny0996" %>%
   read_html %>%
   html_table()
 t1=weather[1] %>%
   unlist() 
+
 t2=weather[2] %>%
   unlist() %>%
   .[-1:-5]
@@ -230,6 +281,9 @@ weather_dat[2, ] = w[str_detect(name_w, ".2$")]
 weather_dat[3, ] = w[str_detect(name_w, ".3$")]
 weather_dat[4, ] = w[str_detect(name_w, ".4$")]
 weather_dat[5, ] = w[str_detect(name_w, ".5$")]
+
+weather_dat=tibble(weather_dat) 
+weather_dat
 ```
 
 
