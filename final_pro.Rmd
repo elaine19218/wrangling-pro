@@ -303,7 +303,7 @@ print(paste("Rate of comments having covid related topic:", p))
 
 
 # Weather
-
+Since the webpage where I intended to scrape the historical monthly weather information changed it's format now, I 
 ```{r echo=FALSE}
 weather="https://www.usclimatedata.com/climate/new-york/new-york/united-states/usny0996" %>%
   read_html %>%
@@ -327,9 +327,59 @@ weather_dat[3, ] = w[str_detect(name_w, ".3$")]
 weather_dat[4, ] = w[str_detect(name_w, ".4$")]
 weather_dat[5, ] = w[str_detect(name_w, ".5$")]
 
-weather_dat=tibble(weather_dat) 
-weather_dat
+knitr::kable(weather_dat)
 ```
+
+Here are some headlines I scraped from Google headlines. Although the node is quite easy to find, the cleaning process is really hard. Since there's many buttons on the page and different buttons have different name in the raw webpage I scraped, it's really time consuming to figure out every type of buttons representitives and make their regular expressions in codes.  
+The output below shows us at this time how many of headlines mentioned covid. We can see that even the coronavirus outbreak has been happening for almost a half year, it is still a hot topic, which is consisitent with the ever-growing number of confired cases.
+```{r}
+criteria0=paste("bookmark_bordersharemore_vert","play_arrow",
+                "keyboard_arrow_rightplay_arrow","View Full Coveragekeyboard_arrow_up","View Full Coverage", sep="|")
+headlines <- "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen" %>%
+  read_html() %>%
+  html_nodes(".bWfURe") %>%
+  html_text() %>%
+  str_split(criteria0) %>%
+  unlist() %>%
+  str_replace_all("...ampvideo_youtube", " ") 
+headlines=headlines[headlines!=""][-1]
+
+criteria=paste("[[:digit:]]+[[:space:]]{1}[a-z]+[[:space:]]{1}ago$",
+                "Yesterday",
+                "[[:digit:]]+[[:space:]]{1}[a-z]+[[:space:]]{1}agoOpinion",
+                "[[:digit:]]+[[:space:]]{1}[a-z]+[[:space:]]{1}agoLocal[[:space:]]{1}coverage", sep="|")
+
+post_info=headlines %>% 
+  str_extract_all(criteria) %>%
+  unlist()
+#success=headlines %>% 
+#  str_detect(criteria)
+#headlines[success==FALSE]
+
+tb_headlines=tibble(title=headlines, time=post_info) 
+covid=tb_headlines$title %>% 
+  str_detect('Coronavirus|(?i)covid') 
+print(paste("The number of headlines related with covid is: ", sum(covid)))
+output=tb_headlines[covid, ] %>% 
+  head(5)
+knitr::kable(output)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
