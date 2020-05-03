@@ -2,7 +2,7 @@
 title: " Assessment on Impact of COVID-19 pandemic"
 author: "Yunjiao Bai"
 date: "5/2/2020"
-output: pdf_document
+output: html_document
 ---
 
 
@@ -18,30 +18,45 @@ library(rvest)
 ```
 
 ## Abstraction
+  
 This report focuses on showing the changes in New York City before and after the virus outbreak from two aspects: daily travel and tourism. It also compares New York's climate data with trends in confirmed cases, and uses news headlines to show the popularity of current topics. A simple analysis shows that until the outbreak in March 2020, there is no big difference between the two periods. There is also no evidence that there is an obvious relationship between virus transmission and temperature.
-
+  
   
 ## Introduction
+  
 Since the beginning of this year, the outbreak of coronavirus has affected the entire world. In the United States, due to the high mobility and density of the population, New York has become the most affected state. In this report, I mainly focus on showing the changes in New York City before and after the virus outbreak from two aspects: transportation and tourism. In addition, I compared New York ’s climate data with trends in confirmed cases to find out whether the virus transmission is related to the weather. Finally, I used the news headlines to show the current topic popularity.
-
+  
+  
 ## Daily Travel
-In New York City, most people do not drive because of congestion and parking problems. Citi Bike is the bike sharing system in New York City and the largest bike sharing system in the United States. Therefore, I chose to use the historical data provided by them to estimate people's daily travle. Since the data set is too large to even upload to the cloud, I only choose to compare the same time period in two years: March 2019 and March 2020.
+  
+In New York City, most people do not drive because of congestion and parking problems. Citi Bike is the bike sharing system in New York City and the largest bike sharing system in the United States. Therefore, I chose to use the historical data provided by them to estimate people's daily travle. Since the data set is too large to even upload to the cloud, I only choose to compare the same time period in two years: March 2019 and March 2020.  
+  
+There are 15 variables in the data file and the variables used in this report are:    
+starttime/stoptime: the time when the bike is unlocked/locked (primary key in this data)  
+start/stop.station.id: trip started/ended station  
+start.station.latitude/lontitude: stations precise position  
+start.station.latitude/lontitude: stations precise position  
+    
+    
 ```{r echo=FALSE}
 dat19=read.csv('201903-citibike-tripdata.csv')
 dat20=read.csv('202003-citibike-tripdata.csv')
 head(dat19, 3)
 ```
-
+  
+  
 First of all, since the data are collected according to the using time, so the number of observations in datasets is the number of users. We can see that the number of users decreased by about 300000 in 2020 than in 2019.
   
+      
 ```{r echo=FALSE}
 print(paste("total number of users in March in 2019 and 2020 are:", nrow(dat19), nrow(dat20)))
 ```
-
+  
+  
 To better visualize the difference, I separated the starttime column into ymd and detailed time and gave out the corresponding weekday. Also, even there is tripduration column in the data, to make sure the duration time is consistent with the time, I also calculated the trip duration as column dur.
   
 These are two bar graphs, representing the total number of users on working days in 2019 and 2020, respectively. We can see that the maximum number of users in 2019 is greater than 200,000, but in 2020 it is less than 200,000, which is only about 175,000. In 2019, there are a large number of users on Friday and Saturday, but the situation is reversed by 2020. It seems that except for working days, at least the number of people traveling by bicycle is decreasing. Since the end of January, the US government has imposed restrictions on entry. This phenomenon may also be affected by the decrease in the number of tourists.
-
+  
 ```{r echo=FALSE}
 ########201903
 op=options(digits.secs = 3)
@@ -91,11 +106,14 @@ barplot2=bike20 %>%
   ggtitle("202003")
 
 head(bike19, 3)
-grid.arrange(barplot1, barplot2, ncol=2)
+barplot1
+barplot2
 ```
-
+  
+  
 As for the trip duration, on average it increased about 300 seconds. 
-
+  
+  
 ```{r}
 print(paste("Average trip duration in March 2019 and March 2020 are:", mean(bike19$dur), mean(bike20$dur)))
 ```
@@ -103,7 +121,9 @@ print(paste("Average trip duration in March 2019 and March 2020 are:", mean(bike
 
 Furthermore, after splitting the related street name from the original column, I extracted all the streets name from data. By combining frequency for every street in both start and stop column, I got frequency for all the streets in 2019 and 2020. The top 10 streets are reserved to get a better illustration.  Then, under the help of function gather(), I the plot like this.  
   
-From the plot, we can easily see that stations on the same hot streets in 2020 are used less frequently than in 2019.
+From the plot, we can easily see that stations on the same hot streets in 2020 are used less frequently than in 2019.  
+  
+  
 ```{r}
 ##19
 bike19$start.station.name=as.character(bike19$start.station.name)
@@ -141,17 +161,19 @@ top10 %>%
   geom_point()+
   geom_line()
 ```
-
-
-
-
+  
+  
+    
+  
 In addition, there are two interactive maps created by leaflets(Google map may have better performance but Google map did not provide free API any more).    
   
 The first map is for 2019, and the second one is for 2020. The color on the map denotes the station's frequency. There are four categories: Low(white), Normal(yellow), Middle(orange) and High(red). They are divided by using the quantiles of frequency in 2019.   
   
 From 2019 to 2020, there's actually little difference existing except for some stations deleted by the company. However, still in the north of the map, the red color seems to be covered a little by the orange and yellow ones, which means stations in those parts are not used as often as a year before.  
   
-Map: 201903
+  
+Map: 201903  
+  
 ```{r echo=FALSE}
 #leaflet of stations2019
 start.station19= dat19 %>%
@@ -192,7 +214,9 @@ leaflet(stations19) %>% addTiles() %>%
   )
 ```
   
-Map: 202003
+  
+Map: 202003  
+  
 ```{r echo=FALSE}
 
 
@@ -238,14 +262,22 @@ leaflet(stations20) %>% addTiles() %>%
 
 
 ```
-
-
   
-## Tourism
+  
+  
+## Tourism  
+  
 The dataset in this part comes from Airbnb, which is a famous online marketplace for arranging or offering lodging, primarily homestays, or tourism experiences. Since Airbnb does not have the data about occupancy, and on their official page, they used review rate to estimate bookings, here I also used the number of reviews to represent the number of travelers in each year because we will mostly focus on the relative trend rather than the precise number.  
   
 Initially, I planned to collect at least three years of data to analyze, but still, the data file is so big, so I just compared the same period of two years. The original data file(bnb_dat) contains all the comments for every listing house from about January 2009 to March 2020. For convenience, I separated the date column into the year, month, and day. To compare the changes brought about by the panic, I filtered the data into two datasets: bnb_dat201903 and bnb_dat202003 and both of them contain data from January to March in each year, which is a quarter of the year.  
-
+  
+There are 9 variables in the origin data:  
+listing_id: the identifier for each listed house  
+id: comment id  
+date: comment date  
+reviewer_id: identifier for reviewers  
+reviewer_name: name of reviewer  
+  
 ```{r echo=FALSE}
 #bnb_dat=read.csv('2020reviews.csv')
 #bnb_dat2019=bnb_dat %>%
@@ -276,8 +308,10 @@ head(bnb_dat201903, 3)
 
 ```
   
+  
 Here are two bar plots for the number of comments in 2019 and 2020. We can see that the trend in 2019 is first going down and then rising up in March. The largest number is about 30000 in March. However, in 2020, the trend is obviously going down although the largest number of comments is more than 30000.
-
+  
+  
 ```{r echo=FALSE}
 #barplot for the number of comments in each month
 p1=bnb_dat201903 %>%
@@ -296,9 +330,11 @@ p2=bnb_dat202003 %>%
 
 grid.arrange(p1, p2, ncol=2)
 ```
-
+  
+  
 Below are some simple descriptive indicators. Compared to the same period in 2019, the number of reviews increased by about 23%. Only in comments in March appears the related words 'covid', 'COVID', and so on. And the rate of those comments is just 1.1%. But since apart from English, many comments using other languages might also mention the virus, so the real mention rate may be a bit higher.
-
+  
+  
 ```{r echo=FALSE}
 # the number of reviews decreased by about 70%
 print(paste("The number of reviews in 2019 and 2020 are: ", 
@@ -315,11 +351,14 @@ p=sum(bnb_dat2020_3$covid, na.rm = TRUE)/nrow(bnb_dat2020_3)
 print(paste("Rate of comments having covid related topic:", p))
 
 ```
-
   
   
-## Weather
-Since the webpage I originally planned to collect monthly historical weather information has now changed its format, I obtained the climate data from another webpage. According to the table, temperatures in New York City generally increase from January to July. If high temperatures can help control the spread of the virus, at least the number of confirmed cases should be reduced. But so far, the number of diagnoses is still increasing. Of course, here is just a simple analysis. A more technical analysis may give a more accurate and correct explanation.
+  
+## Weather  
+  
+Since the webpage I originally planned to collect monthly historical weather information has now changed its format, I obtained the climate data from another webpage. According to the table, temperatures in New York City generally increase from January to July. If high temperatures can help control the spread of the virus, at least the number of confirmed cases should be reduced. But so far, the number of diagnoses is still increasing. Of course, here is just a simple analysis. A more technical analysis may give a more accurate and correct explanation.  
+  
+  
 ```{r echo=FALSE}
 weather="https://www.usclimatedata.com/climate/new-york/new-york/united-states/usny0996" %>%
   read_html %>%
@@ -352,7 +391,10 @@ knitr::kable(weather_dat)
   
 Here are some headlines I scraped from Google headlines. Although the node is quite easy to find, the cleaning process is really hard. Since there are many buttons on the page and different buttons have different names in the raw webpage I scraped, it's really time-consuming to figure out every type of buttons representatives and make their regular expressions in codes.   
   
-The output below shows us, at this time how many news headlines mentioned COVID. We can see that even the coronavirus outbreak has been happening for almost a half year, it is still a hot topic, which is consistent with the ever-growing number of confirmed cases.
+The output below shows us, at this time how many news headlines mentioned COVID. We can see that even the coronavirus outbreak has been happening for almost a half year, it is still a hot topic, which is consistent with the ever-growing number of confirmed cases.  
+  
+  
+  
 ```{r}
 criteria0=paste("bookmark_bordersharemore_vert","play_arrow",
                 "keyboard_arrow_rightplay_arrow","View Full Coveragekeyboard_arrow_up","View Full Coverage", sep="|")
@@ -385,17 +427,20 @@ output=tb_headlines[covid, ] %>%
   head(5)
 knitr::kable(output)
 ```
-
   
-    
-## Conclusions
+  
+  
+## Conclusions  
+  
 In terms of daily travel and tourism in New York, at least up to March 2019, there's no obvious change in people's daily travel since the stay-at-home order was executed on March 22 which is almost the end of March.  
+  
 As for the statement that higher temperatures will control the spread of the virus, from the climate data collected in this report, there's no evidence to prove it.  
 What's more, with the increasing number of confirmed cases, the topic of coronavirus will keep being popular for a long time.
-
+  
   
   
 ## Appendices
+  
 Data origin:  
 Daily travel: https://www.citibikenyc.com/system-data  
 Tourism: http://insideairbnb.com/get-the-data.html  
