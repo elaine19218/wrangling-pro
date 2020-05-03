@@ -85,6 +85,46 @@ barplot2=bike20 %>%
 grid.arrange(barplot1, barplot2, ncol=2)
 ```
 
+
+Further more, after spliting the related streets name in original one column, I extracted all the sreets name from data. By combining frequency for every street in both start and stop column, I got frequency for all the streets in 2019 and 2020. To get a better illustration, top 10 streets are reserved. Then, under the help of function gather(), I got lines plot like this.  
+From the plot we can easily see that, stations on the same hot streets in 2020 are used less frequent than 2019.
+```{r}
+##19
+bike19$start.station.name=as.character(bike19$start.station.name)
+bike19$end.station.name=as.character(bike19$end.station.name)
+streets19=c(bike19$start.station.name, bike19$end.station.name) %>%
+  str_split(" & ") %>%
+  unlist() %>%
+  tibble(name=.) %>%
+  group_by(name) %>%
+  summarise(n19=n()) %>%
+  arrange(desc(n19)) 
+
+
+##20
+bike20$start.station.name=as.character(bike20$start.station.name)
+bike20$end.station.name=as.character(bike20$end.station.name)
+streets20=c(bike20$start.station.name, bike20$end.station.name) %>%
+  str_split(" & ") %>%
+  unlist() %>%
+  tibble(name=.) %>%
+  group_by(name) %>%
+  summarise(n20=n()) %>%
+  arrange(desc(n20)) 
+
+x=streets19 %>% head(10)
+y=streets20 %>% head(10)
+top10 = x %>%
+  left_join(y) %>% 
+  gather(year, n, n19:n20)
+
+top10 %>% 
+  ggplot(aes(x=name, y=n, color=year, group=year)) +
+  geom_point()+
+  geom_line()
+```
+
+
 Trip Duration?
 ```{r echo=FALSE}
 
@@ -183,6 +223,12 @@ leaflet(stations20) %>% addTiles() %>%
 ```
 
 
+
+
+
+
+
+
 # Travel
   The dataset in this part comes from Airbnb, which is a famous online marketplace for arranging or offering lodging, primarily homestays, or tourism experiences. Since Airbnb does not have the data about occupancy, and on their official page, they used review rate to estimate bookings, I also used the number of reviews here to represent the number of travelers in each year as we will mostly focus on the relative trend but not the precise number.  
   Initially I planned to collect at least three years of data to analyze, but the data file is so large and the data even cannot be uploded to cloud, so I just compared the same period of two years.  The original data file(bnb_dat) contains all the comments for every listing house from about January, 2009 to March, 2020. To compare the change brought about by the panic, I filtered the data into two datasets: bnb_dat2019 and bnb_dat2020 and both of them contains data from January to March in each year which is a quarter of year.  
@@ -254,7 +300,6 @@ p=sum(bnb_dat2020_3$covid, na.rm = TRUE)/nrow(bnb_dat2020_3)
 print(paste("Rate of comments having covid related topic:", p))
 
 ```
-
 
 
 # Weather
