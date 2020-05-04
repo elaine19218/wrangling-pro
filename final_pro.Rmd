@@ -8,6 +8,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
 library(tidyverse)
 library(lubridate)
 library(stringr)
@@ -77,9 +78,12 @@ bike19$weekday=bike19$weekday %>%
 barplot1=bike19 %>%
   group_by(weekday) %>%
   summarise(n=n()) %>%
-  ggplot(mapping=aes(x=weekday, y=n)) +
-  geom_bar(stat="identity", fill="lightcyan2") +
-  ggtitle("201903")
+  ggplot(mapping=aes(x=weekday, y=n, fill=weekday)) +
+  geom_bar(stat="identity") +
+  geom_text(aes(label=n), hjust=1, color="white", size=3.5)+
+  ggtitle("201903")+
+  coord_flip() +
+  theme_minimal()
 
 
 #######202003
@@ -101,9 +105,13 @@ bike20$weekday=bike20$weekday %>%
 barplot2=bike20 %>%
   group_by(weekday) %>%
   summarise(n=n()) %>%
-  ggplot(mapping=aes(x=weekday, y=n)) +
-  geom_bar(stat="identity", fill="lightcyan2") +
-  ggtitle("202003")
+  ggplot(mapping=aes(x=weekday, y=n, fill=weekday)) +
+  geom_bar(stat="identity") +
+  geom_text(aes(label=n), hjust=1, color="white", size=3.5)+
+  ggtitle("202003")+
+  coord_flip() +
+  theme_minimal()
+
 
 head(bike19, 3)
 barplot1
@@ -133,8 +141,9 @@ duration20=bike20 %>%
 duration=rbind(duration19, duration20)
 duration %>% 
   ggplot(aes(x=weekday, y=average, color=time, group=time)) +
-  geom_point()+
-  geom_line()
+  geom_point(aes(shape=time))+
+  geom_line(aes(linetype=time)) +
+  theme_minimal()
 
 ```
   
@@ -178,8 +187,9 @@ x
 y
 top10 %>% 
   ggplot(aes(x=name, y=n, color=year, group=year)) +
-  geom_point()+
-  geom_line()
+  geom_point(aes(shape=year))+
+  geom_line(aes(linetype=year)) +
+  theme_minimal()
 ```
   
   
@@ -337,15 +347,19 @@ Here are two bar plots for the number of comments in 2019 and 2020. We can see t
 p1=bnb_dat201903 %>%
   group_by(month) %>%
   summarise(n=n()) %>%
-  ggplot(aes(x=month, y=n)) +
-  geom_bar(stat="identity", fill="lightcyan2") +
+  ggplot(aes(x=month, y=n, fill=factor(month))) +
+  geom_bar(stat="identity") +
+  geom_point(group=1) +
+  geom_line(group=1) +
   ggtitle("201903")
 
 p2=bnb_dat202003 %>%
   group_by(month) %>%
   summarise(n=n()) %>%
-  ggplot(aes(x=month, y=n)) +
-  geom_bar(stat="identity", fill="lightcyan2") +
+  ggplot(aes(x=month, y=n, fill=factor(month))) +
+  geom_bar(stat="identity") +
+  geom_point(group=1) +
+  geom_line(group=1) +
   ggtitle("202003")
 
 grid.arrange(p1, p2, ncol=2)
@@ -398,14 +412,32 @@ weather_dat=matrix(0, 5, 13)
 month_name=name_w %>%
   str_extract("[A-z]{1,3}") %>%
   unique()
-colnames(weather_dat)=c("indicater", month_name)
+colnames(weather_dat)=c("indicator", month_name)
 weather_dat[1, ] = w[str_detect(name_w, ".1$")]
 weather_dat[2, ] = w[str_detect(name_w, ".2$")]
 weather_dat[3, ] = w[str_detect(name_w, ".3$")]
 weather_dat[4, ] = w[str_detect(name_w, ".4$")]
 weather_dat[5, ] = w[str_detect(name_w, ".5$")]
-
 knitr::kable(weather_dat)
+```
+  
+Here's a plot of average high and average low temperature in each month.
+  
+```{r, plot of average temperature}
+weather_dat2=as.data.frame(weather_dat)
+av_high=weather_dat2[1, -1] %>%
+   gather("month", "temperature", Jan:Dec) %>% 
+   mutate(type=rep("high", 12))
+av_low=weather_dat2[2, -1] %>%
+   gather("month", "temperature", Jan:Dec) %>% 
+   mutate(type=rep("low", 12))
+ av_tem=rbind(av_high, av_low) 
+ av_tem$month=av_tem$month %>% factor(levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+av_tem %>%  
+   ggplot(aes(x=month, y=temperature, color=type, group=type)) +
+   geom_point(aes(shape=type))+
+   geom_line(aes(linetype=type)) +
+   theme_minimal()
 ```
 
 
