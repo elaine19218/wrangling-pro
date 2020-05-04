@@ -31,7 +31,7 @@ Since the beginning of this year, the outbreak of coronavirus has affected the e
   
 In New York City, most people do not drive because of congestion and parking problems. Citi Bike is the bike sharing system in New York City and the largest bike sharing system in the United States. Therefore, I chose to use the historical data provided by them to estimate people's daily travle. Since the data set is too large to even upload to the cloud, I only choose to compare the same time period in two years: March 2019 and March 2020.  
   
-There are 15 variables in the data file and the variables used in this report are:    
+Table below is a part of my original data. There are 15 variables in the data file and the variables used in this report are:    
 starttime/stoptime: the time when the bike is unlocked/locked (primary key in this data)  
 start/stop.station.id: trip started/ended station  
 start.station.latitude/lontitude: stations precise position  
@@ -41,7 +41,7 @@ start.station.latitude/lontitude: stations precise position
 ```{r, data, echo=FALSE}
 dat19=read.csv('201903-citibike-tripdata.csv')
 dat20=read.csv('202003-citibike-tripdata.csv')
-head(dat19, 5)
+head(dat19, 3)
 ```
   
   
@@ -53,9 +53,9 @@ print(paste("Total number of users in March 2019 and 2020 are:", nrow(dat19), nr
 ```
   
   
-To better visualize the difference, I separated the starttime column into ymd and detailed time and gave out the corresponding weekday. Also, even there is tripduration column in the data, to make sure the duration time is consistent with the time, I also calculated the trip duration as column dur.  
+To better visualize the difference, I separated the starttime column into ymd and detailed time and gave out the corresponding weekday. Also, even there is tripduration column in the data, to make sure the duration time is consistent with the time, I also calculated the trip duration as column dur. The table below shows the processed data. 
   
-These are two bar graphs, representing the total number of users on working days in 2019 and 2020, respectively. We can see that the maximum number of users in 2019 is greater than 200,000, but in 2020 it is less than 200,000, which is only about 175,000. In 2019, there are a large number of users on Friday and Saturday, but the situation is reversed by 2020. It seems that except for working days, at least the number of people traveling by bicycle is decreasing. Since the end of January, the US government has imposed restrictions on entry. This phenomenon may also be affected by the decrease in the number of tourists.  
+There are also two bar plots, representing the total number of users on working days in 2019 and 2020, respectively. We can see that the maximum number of users in 2019 is greater than 200,000, but in 2020 it is less than 200,000, which is only about 175,000. In 2019, there are a large number of users on Friday and Saturday, but the situation is reversed by 2020. It seems that except for working days, at least the number of people traveling by bicycle is decreasing. Since the end of January, the US government has imposed restrictions on entry. This phenomenon may also be affected by the decrease in the number of tourists.  
   
 ```{r, weekday plot, echo=FALSE}
 ########201903
@@ -105,7 +105,7 @@ barplot2=bike20 %>%
   geom_bar(stat="identity", fill="lightcyan2") +
   ggtitle("202003")
 
-head(bike19, 5)
+head(bike19, 3)
 barplot1
 barplot2
 ```
@@ -185,7 +185,7 @@ top10 %>%
   
     
   
-In addition, there are two interactive maps created by leaflets(Google map may have better performance but Google map did not provide free API any more).    
+In addition, there are two interactive maps created using leaflets(Google map may have better performance but Google map did not provide free API any more).    
   
 The first map is for 2019, and the second one is for 2020. The color on the map denotes the station's frequency. There are four categories: Low(white), Normal(yellow), Middle(orange) and High(red). They are divided by using the quantiles of frequency in 2019.   
   
@@ -291,7 +291,7 @@ The dataset in this part comes from Airbnb, which is a famous online marketplace
   
 Initially, I planned to collect at least three years of data to analyze, but still, the data file is so big, so I just compared the same period of two years. The original data file(bnb_dat) contains all the comments for every listing house from about January 2009 to March 2020. For convenience, I separated the date column into the year, month, and day. To compare the changes brought about by the panic, I filtered the data into two datasets: bnb_dat201903 and bnb_dat202003 and both of them contain data from January to March in each year, which is a quarter of the year.  
   
-There are 9 variables in the origin data:  
+Table below is a snippet of my original data. There are 9 variables:  
 listing_id: the identifier for each listed house  
 id: comment id  
 date: comment date  
@@ -352,7 +352,7 @@ grid.arrange(p1, p2, ncol=2)
 ```
   
   
-Below are some simple descriptive indicators. Compared to the same period in 2019, the number of reviews increased by about 23%. Only in comments in March appears the related words 'covid', 'COVID', and so on. And the rate of those comments is just 1.1%. But since apart from English, many comments using other languages might also mention the virus, so the real mention rate may be a bit higher.  
+Below are some simple descriptive indicators and a snippet of comments mentioned the virus. Compared to the same period in 2019, the number of reviews increased by about 23%. Only in comments in March appears the related words 'covid', 'COVID', and so on. And the rate of those comments is just 1.1%. But since apart from English, many comments using other languages might also mention the virus, so the real mention rate may be a bit higher.  
   
   
 ```{r, covid detection in reviews, echo=FALSE}
@@ -369,7 +369,8 @@ bnb_dat2020_3 = bnb_dat202003 %>%
 
 s=bnb_dat2020_3[bnb_dat2020_3$covid==TRUE, ]
 p=sum(bnb_dat2020_3$covid, na.rm = TRUE)/nrow(bnb_dat2020_3)
-head(s, 5)
+
+head(s, 3)
 print(paste("Rate of comments having covid related topic:", p))
 
 ```
@@ -378,7 +379,7 @@ print(paste("Rate of comments having covid related topic:", p))
   
 ## Weather  
   
-Since the webpage I originally planned to collect monthly historical weather information has now changed its format, I obtained the climate data from another webpage. According to the table, temperatures in New York City generally increase from January to July. If high temperatures can help control the spread of the virus, at least the number of confirmed cases should be reduced. But so far, the number of diagnoses is still increasing. Of course, here is just a simple analysis. A more technical analysis may give a more accurate and correct explanation.  
+Since the webpage I originally planned to collect monthly historical weather information has now changed its format, I scraped the climate data from the web U.S.Climate Data. According to the table, temperatures in New York City generally increase from January to July. If high temperatures can help control the spread of the virus, at least the number of confirmed cases should be reduced. But so far, the number of diagnoses is still increasing. Of course, here is just a simple analysis. A more technical analysis may give a more accurate and correct explanation.  
   
   
 ```{r, weather information scraping, echo=FALSE}
