@@ -12,10 +12,13 @@ knitr::opts_chunk$set(warning = FALSE)
 library(tidyverse)
 library(lubridate)
 library(stringr)
-library(dplyr)
 library(leaflet)
 library(gridExtra)
 library(rvest)
+library(tibble)
+library(dplyr,warn.conflicts = FALSE)
+library(tidytext)
+library(wordcloud)
 ```
 
 ## Abstraction
@@ -389,6 +392,21 @@ print(paste("Rate of comments having covid related topic:", p))
 
 ```
   
+A word cloud of comments about the virus is showed below.
+  
+```{r, wordcloud for comments mentioned covid}
+
+text=s$comments
+com=data.frame(text, stringsAsFactors=FALSE)
+i=1:length(text)
+com1=tibble(line=i, text=text)
+com1$text=as.character(com1$text)
+com2=com1 %>% 
+  unnest_tokens(word, 'text') %>% 
+  anti_join(stop_words, by='word') %>%
+  count(word, sort = T) %>%
+  with(wordcloud(word, n, max.words = 100))
+```
   
   
 ## Weather  
