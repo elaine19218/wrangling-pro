@@ -19,12 +19,12 @@ library(rvest)
 
 ## Abstraction
   
-This report focuses on showing the changes in New York City before and after the virus outbreak from two aspects: daily travel and tourism. It also compares New York's climate data with trends in confirmed cases, and uses news headlines to show the popularity of current topics. A simple analysis shows that until the outbreak in March 2020, there is no big difference between the two periods. There is also no evidence that there is an obvious relationship between virus transmission and temperature.
+This report focuses on showing the changes in New York City before and after the virus outbreak from two aspects: daily travel and tourism. It also compares New York's climate data with trends in confirmed cases, and uses news headlines to show the popularity of current topics. A simple analysis shows that until the outbreak in March 2020, there is no big difference between the two periods. There is also no evidence that there is an obvious relationship between virus transmission and temperature.  
   
   
 ## Introduction
   
-Since the beginning of this year, the outbreak of coronavirus has affected the entire world. In the United States, due to the high mobility and density of the population, New York has become the most affected state. In this report, I mainly focus on showing the changes in New York City before and after the virus outbreak from two aspects: transportation and tourism. In addition, I compared New York ’s climate data with trends in confirmed cases to find out whether the virus transmission is related to the weather. Finally, I used the news headlines to show the current topic popularity.
+Since the beginning of this year, the outbreak of coronavirus has affected the entire world. In the United States, due to the high mobility and density of the population, New York has become the most affected state. In this report, I mainly focus on showing the changes in New York City before and after the virus outbreak from two aspects: transportation and tourism. In addition, I compared New York ’s climate data with trends in confirmed cases to find out whether the virus transmission is related to the weather. Finally, I used the news headlines to show the current topic popularity.  
   
   
 ## Daily Travel
@@ -38,26 +38,26 @@ start.station.latitude/lontitude: stations precise position
 start.station.latitude/lontitude: stations precise position  
     
     
-```{r echo=FALSE}
+```{r, data, echo=FALSE}
 dat19=read.csv('201903-citibike-tripdata.csv')
 dat20=read.csv('202003-citibike-tripdata.csv')
-head(dat19, 3)
+head(dat19, 5)
 ```
   
   
-First of all, since the data are collected according to the using time, so the number of observations in datasets is the number of users. We can see that the number of users decreased by about 300000 in 2020 than in 2019.
+First of all, since the data are collected according to the using time, so the number of observations in datasets is the number of users. We can see that the number of users decreased by about 300000 in 2020 than in 2019.  
   
       
-```{r echo=FALSE}
-print(paste("total number of users in March in 2019 and 2020 are:", nrow(dat19), nrow(dat20)))
+```{r, data summary, echo=FALSE}
+print(paste("Total number of users in March 2019 and 2020 are:", nrow(dat19), nrow(dat20)))
 ```
   
   
-To better visualize the difference, I separated the starttime column into ymd and detailed time and gave out the corresponding weekday. Also, even there is tripduration column in the data, to make sure the duration time is consistent with the time, I also calculated the trip duration as column dur.
+To better visualize the difference, I separated the starttime column into ymd and detailed time and gave out the corresponding weekday. Also, even there is tripduration column in the data, to make sure the duration time is consistent with the time, I also calculated the trip duration as column dur.  
   
-These are two bar graphs, representing the total number of users on working days in 2019 and 2020, respectively. We can see that the maximum number of users in 2019 is greater than 200,000, but in 2020 it is less than 200,000, which is only about 175,000. In 2019, there are a large number of users on Friday and Saturday, but the situation is reversed by 2020. It seems that except for working days, at least the number of people traveling by bicycle is decreasing. Since the end of January, the US government has imposed restrictions on entry. This phenomenon may also be affected by the decrease in the number of tourists.
+These are two bar graphs, representing the total number of users on working days in 2019 and 2020, respectively. We can see that the maximum number of users in 2019 is greater than 200,000, but in 2020 it is less than 200,000, which is only about 175,000. In 2019, there are a large number of users on Friday and Saturday, but the situation is reversed by 2020. It seems that except for working days, at least the number of people traveling by bicycle is decreasing. Since the end of January, the US government has imposed restrictions on entry. This phenomenon may also be affected by the decrease in the number of tourists.  
   
-```{r echo=FALSE}
+```{r, weekday plot, echo=FALSE}
 ########201903
 op=options(digits.secs = 3)
 bike19=dat19 %>%
@@ -78,7 +78,7 @@ barplot1=bike19 %>%
   group_by(weekday) %>%
   summarise(n=n()) %>%
   ggplot(mapping=aes(x=weekday, y=n)) +
-  geom_bar(stat="identity", fill="#CCCCCC") +
+  geom_bar(stat="identity", fill="lightcyan2") +
   ggtitle("201903")
 
 
@@ -102,29 +102,49 @@ barplot2=bike20 %>%
   group_by(weekday) %>%
   summarise(n=n()) %>%
   ggplot(mapping=aes(x=weekday, y=n)) +
-  geom_bar(stat="identity", fill="#CCCCCC") +
+  geom_bar(stat="identity", fill="lightcyan2") +
   ggtitle("202003")
 
-head(bike19, 3)
+head(bike19, 5)
 barplot1
 barplot2
 ```
   
   
-As for the trip duration, on average it increased about 300 seconds. 
+As for the trip duration, on average it increased about 300 seconds.  
+The graph below shows the everage tripduration for every weekday in March 2019 and March 2020. It can be seen that, the trip duration decreases as a whole in 2020.  
   
   
-```{r}
+```{r, tripduration summary}
+print(c('201903', summary(bike19$dur)))
+print(c('202003', summary(bike20$dur)))
 print(paste("Average trip duration in March 2019 and March 2020 are:", mean(bike19$dur), mean(bike20$dur)))
+
+duration19=bike19 %>% 
+  select(weekday, dur) %>% 
+  group_by(weekday) %>% 
+  summarise(average=mean(dur)) %>% 
+  mutate(time=rep('201903', times=7))
+duration20=bike20 %>% 
+  select(weekday, dur) %>% 
+  group_by(weekday) %>% 
+  summarise(average=mean(dur)) %>% 
+  mutate(time=rep('202003', times=7))
+duration=rbind(duration19, duration20)
+duration %>% 
+  ggplot(aes(x=weekday, y=average, color=time, group=time)) +
+  geom_point()+
+  geom_line()
+
 ```
   
-
-Furthermore, after splitting the related street name from the original column, I extracted all the streets name from data. By combining frequency for every street in both start and stop column, I got frequency for all the streets in 2019 and 2020. The top 10 streets are reserved to get a better illustration.  Then, under the help of function gather(), I the plot like this.  
   
-From the plot, we can easily see that stations on the same hot streets in 2020 are used less frequently than in 2019.  
+Furthermore, after splitting the related street name from the original column, I extracted all the streets name from data. By combining frequency for every street in both start and stop column, I got frequency for all the streets in 2019 and 2020. The top 10 streets are reserved to get a better illustration.  Then, under the help of function gather(), I the plot like this. Top 10 busy streets are: Broadway, 6 Ave, 1 Ave, 8 Ave, 2 Ave, 5 Ave, 3 Ave, 7 Ave, 10 Ave and Park Ave.  
+  
+From the plot, we can easily see that stations on the same busy streets in 2020 are used less frequently than in 2019. Combining the graph above, people are going out less frequently but the tripduration rises up.  
   
   
-```{r}
+```{r, busy streets summary}
 ##19
 bike19$start.station.name=as.character(bike19$start.station.name)
 bike19$end.station.name=as.character(bike19$end.station.name)
@@ -174,7 +194,7 @@ From 2019 to 2020, there's actually little difference existing except for some s
   
 Map: 201903  
   
-```{r echo=FALSE}
+```{r, frequency leaflet for 2019, echo=FALSE}
 #leaflet of stations2019
 start.station19= dat19 %>%
   select(start.station.id, start.station.latitude, 
@@ -217,7 +237,7 @@ leaflet(stations19) %>% addTiles() %>%
   
 Map: 202003  
   
-```{r echo=FALSE}
+```{r, frequency leaflet for 2020, echo=FALSE}
 
 
 #leaflet of stations2020
@@ -278,7 +298,7 @@ date: comment date
 reviewer_id: identifier for reviewers  
 reviewer_name: name of reviewer  
   
-```{r echo=FALSE}
+```{r, data preparation, echo=FALSE}
 #bnb_dat=read.csv('2020reviews.csv')
 #bnb_dat2019=bnb_dat %>%
 #  mutate(time=ymd(date)) %>%
@@ -309,33 +329,33 @@ head(bnb_dat201903, 3)
 ```
   
   
-Here are two bar plots for the number of comments in 2019 and 2020. We can see that the trend in 2019 is first going down and then rising up in March. The largest number is about 30000 in March. However, in 2020, the trend is obviously going down although the largest number of comments is more than 30000.
+Here are two bar plots for the number of comments in 2019 and 2020. We can see that the trend in 2019 is first going down and then rising up in March. The largest number is about 30000 in March. However, in 2020, the trend is obviously going down although the largest number of comments is more than 30000.  
   
   
-```{r echo=FALSE}
+```{r, visualize monthly reviews, echo=FALSE}
 #barplot for the number of comments in each month
 p1=bnb_dat201903 %>%
   group_by(month) %>%
   summarise(n=n()) %>%
   ggplot(aes(x=month, y=n)) +
-  geom_bar(stat="identity", fill="#CCCCCC") +
+  geom_bar(stat="identity", fill="lightcyan2") +
   ggtitle("201903")
 
 p2=bnb_dat202003 %>%
   group_by(month) %>%
   summarise(n=n()) %>%
   ggplot(aes(x=month, y=n)) +
-  geom_bar(stat="identity", fill="#CCCCCC") +
+  geom_bar(stat="identity", fill="lightcyan2") +
   ggtitle("202003")
 
 grid.arrange(p1, p2, ncol=2)
 ```
   
   
-Below are some simple descriptive indicators. Compared to the same period in 2019, the number of reviews increased by about 23%. Only in comments in March appears the related words 'covid', 'COVID', and so on. And the rate of those comments is just 1.1%. But since apart from English, many comments using other languages might also mention the virus, so the real mention rate may be a bit higher.
+Below are some simple descriptive indicators. Compared to the same period in 2019, the number of reviews increased by about 23%. Only in comments in March appears the related words 'covid', 'COVID', and so on. And the rate of those comments is just 1.1%. But since apart from English, many comments using other languages might also mention the virus, so the real mention rate may be a bit higher.  
   
   
-```{r echo=FALSE}
+```{r, covid detection in reviews, echo=FALSE}
 # the number of reviews decreased by about 70%
 print(paste("The number of reviews in 2019 and 2020 are: ", 
         nrow(bnb_dat201903), nrow(bnb_dat202003)))
@@ -347,7 +367,9 @@ bnb_dat2020_3 = bnb_dat202003 %>%
   filter(month==3) %>%
   mutate(covid=str_detect(comments, "covid|COVID|coronavirus"))
 
+s=bnb_dat2020_3[bnb_dat2020_3$covid==TRUE, ]
 p=sum(bnb_dat2020_3$covid, na.rm = TRUE)/nrow(bnb_dat2020_3)
+head(s, 5)
 print(paste("Rate of comments having covid related topic:", p))
 
 ```
@@ -359,7 +381,7 @@ print(paste("Rate of comments having covid related topic:", p))
 Since the webpage I originally planned to collect monthly historical weather information has now changed its format, I obtained the climate data from another webpage. According to the table, temperatures in New York City generally increase from January to July. If high temperatures can help control the spread of the virus, at least the number of confirmed cases should be reduced. But so far, the number of diagnoses is still increasing. Of course, here is just a simple analysis. A more technical analysis may give a more accurate and correct explanation.  
   
   
-```{r echo=FALSE}
+```{r, weather information scraping, echo=FALSE}
 weather="https://www.usclimatedata.com/climate/new-york/new-york/united-states/usny0996" %>%
   read_html %>%
   html_table()
@@ -387,7 +409,7 @@ knitr::kable(weather_dat)
 
 
   
-## News Headlines
+## News Headlines  
   
 Here are some headlines I scraped from Google headlines. Although the node is quite easy to find, the cleaning process is really hard. Since there are many buttons on the page and different buttons have different names in the raw webpage I scraped, it's really time-consuming to figure out every type of buttons representatives and make their regular expressions in codes.   
   
@@ -395,7 +417,7 @@ The output below shows us, at this time how many news headlines mentioned COVID.
   
   
   
-```{r}
+```{r, news headlines scraping}
 criteria0=paste("bookmark_bordersharemore_vert","play_arrow",
                 "keyboard_arrow_rightplay_arrow","View Full Coveragekeyboard_arrow_up","View Full Coverage", sep="|")
 headlines <- "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen" %>%
@@ -435,17 +457,17 @@ knitr::kable(output)
 In terms of daily travel and tourism in New York, at least up to March 2019, there's no obvious change in people's daily travel since the stay-at-home order was executed on March 22 which is almost the end of March.  
   
 As for the statement that higher temperatures will control the spread of the virus, from the climate data collected in this report, there's no evidence to prove it.  
-What's more, with the increasing number of confirmed cases, the topic of coronavirus will keep being popular for a long time.
+What's more, with the increasing number of confirmed cases, the topic of coronavirus will keep being popular for a long time.  
   
   
   
-## Appendices
+## Appendices  
   
 Data origin:  
 Daily travel: https://www.citibikenyc.com/system-data  
 Tourism: http://insideairbnb.com/get-the-data.html  
 Weather: https://www.usclimatedata.com/climate/new-york/new-york/united-states/usny0996  
-News headlines: https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen
+News headlines: https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US%3Aen  
 
 
 
