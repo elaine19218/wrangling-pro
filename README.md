@@ -1,4 +1,5 @@
 # wrangling-pro
+The output of this Rmarkdown file is html since only in this way the leaflets in it can be visible.  
 The name of data files in repository are exactly the same with the variables in the codes.  
 Since my original data files are too large to upload, all the data files are only a part of my original data.  
 
